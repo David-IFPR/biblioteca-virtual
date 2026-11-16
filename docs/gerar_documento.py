@@ -296,9 +296,18 @@ def flow_box(page, x, y, w, h, text, diamond=False):
         )
         shape.finish(color=PURPLE, fill=(0.97, 0.95, 0.90), closePath=True, width=0.9)
         shape.commit()
+        # The label sits in the wide middle. The top of the diamond is too narrow for the phrase.
+        inner_w = w * 0.46
+        page.insert_textbox(
+            pymupdf.Rect(cx - inner_w / 2, cy - 7, cx + inner_w / 2, cy + 9),
+            text, fontname="arial", fontsize=8, align=1, color=BLACK,
+        )
     else:
         page.draw_rect(rect, color=PURPLE, fill=LAVENDER, width=0.8, radius=0.04)
-    page.insert_textbox(pymupdf.Rect(x + 4, y + 3, x + w - 4, y + h - 2), text, fontname="arial", fontsize=8, align=1, color=BLACK)
+        page.insert_textbox(
+            pymupdf.Rect(x + 8, y + (h - 12) / 2, x + w - 8, y + (h + 12) / 2),
+            text, fontname="arial", fontsize=8, align=1, color=BLACK,
+        )
     return rect
 
 
@@ -587,9 +596,9 @@ def build():
     def rule(x1, y1, x2, y2):
         page.draw_line(pymupdf.Point(x1, y1), pymupdf.Point(x2, y2), color=PURPLE, width=0.9)
 
-    solicita = flow_box(page, 200, 112, 160, 30, "Aluno solicita a obra")
-    decide = flow_box(page, 185, 158, 190, 46, "Há exemplar e limite?", True)
-    recusa_hora = flow_box(page, 410, 164, 125, 34, "Recusado na hora")
+    solicita = flow_box(page, 190, 112, 180, 30, "Aluno solicita a obra")
+    decide = flow_box(page, 155, 154, 250, 56, "Há exemplar e limite?", True)
+    recusa_hora = flow_box(page, 430, 166, 128, 32, "Recusado na hora")
     pendente = flow_box(page, 210, 224, 140, 28, "Pedido pendente")
     recusa = flow_box(page, 40, 276, 130, 28, "Administrador recusa")
     aprova = flow_box(page, 210, 276, 140, 28, "Administrador aprova")
@@ -603,9 +612,9 @@ def build():
     livre = flow_box(page, 200, 562, 160, 28, "Exemplar disponível")
     down_arrow(page, solicita, decide)
     arrow(page, decide, recusa_hora)
-    page.insert_text((378, 176), "não", fontname="arial", fontsize=8, color=PURPLE)
+    page.insert_text((decide.x1 + 4, (decide.y0 + decide.y1) / 2 - 8), "não", fontname="arial", fontsize=8, color=PURPLE)
     down_arrow(page, decide, pendente)
-    page.insert_text((292, 214), "sim", fontname="arial", fontsize=8, color=PURPLE)
+    page.insert_text(((pendente.x0 + pendente.x1) / 2 + 6, decide.y1 + 11), "sim", fontname="arial", fontsize=8, color=PURPLE)
     down_arrow(page, pendente, aprova)
     rule(pendente.x0, (pendente.y0 + pendente.y1) / 2, recusa.x1, (recusa.y0 + recusa.y1) / 2)
     arrow(page, aprova, reserva)
