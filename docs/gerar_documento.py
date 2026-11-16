@@ -446,39 +446,57 @@ def build():
     def rule(x1, y1, x2, y2):
         page.draw_line(pymupdf.Point(x1, y1), pymupdf.Point(x2, y2), color=PURPLE, width=0.9)
 
-    def tag(x, y, text):
-        page.insert_text((x, y), text, fontname="arial", fontsize=7, color=PURPLE)
+    def mark(x, y, text, align="left"):
+        size = 8
+        width = pymupdf.Font(fontfile=ARIAL).text_length(text, fontsize=size)
+        x0 = x - width if align == "right" else x
+        page.draw_rect(pymupdf.Rect(x0 - 1, y - 9, x0 + width + 2, y + 2), color=(1, 1, 1), fill=(1, 1, 1), width=0)
+        page.insert_text((x0, y), text, fontname="arial", fontsize=size, color=PURPLE)
 
-    user = entity(page, 54, 118, 150, "USER", ["int   id   PK", "string   email   UK", "string   full_name", "string   role", "string   password_hash"])
-    student = entity(page, 230, 118, 155, "STUDENT_PROFILE", ["int   id   PK", "int   user_id   FK", "string   enrollment   UK", "bool   is_blocked", "date   created_at"])
-    category = entity(page, 415, 118, 125, "CATEGORY", ["int   id   PK", "string   name   UK", "string   description"])
-    book = entity(page, 410, 250, 130, "BOOK", ["int   id   PK", "int   category_id   FK", "string   title", "string   author", "string   isbn", "int   year"])
-    copy = entity(page, 410, 400, 130, "COPY", ["int   id   PK", "int   book_id   FK", "string   inventory_code   UK", "string   status"])
-    request = entity(page, 54, 300, 155, "LOAN_REQUEST", ["int   id   PK", "int   student_id   FK", "int   book_id   FK", "int   copy_id   FK", "string   status"])
-    loan = entity(page, 230, 310, 155, "LOAN", ["int   id   PK", "int   student_id   FK", "int   copy_id   FK", "date   due_date", "string   status", "int   confirmed_by   FK"])
-    note = entity(page, 54, 490, 155, "NOTIFICATION", ["int   id   PK", "int   user_id   FK", "string   kind", "bool   is_read"])
-    rule(user.x1, (user.y0 + user.y1) / 2, student.x0, (student.y0 + student.y1) / 2)
-    tag(user.x1 + 4, user.y0 + 28, "1    0..1")
-    rule((category.x0 + category.x1) / 2, category.y1, (book.x0 + book.x1) / 2, book.y0)
-    tag(category.x1 - 28, category.y1 + 14, "1  N")
-    rule((book.x0 + book.x1) / 2, book.y1, (copy.x0 + copy.x1) / 2, copy.y0)
-    tag(book.x1 - 28, book.y1 + 14, "1  N")
-    bus_y = student.y1 + 18
-    req_x = (request.x0 + request.x1) / 2
+    user = entity(page, 36, 118, 140, "USER", ["int   id   PK", "string   email   UK", "string   full_name", "string   role", "string   password_hash"])
+    student = entity(page, 268, 118, 150, "STUDENT_PROFILE", ["int   id   PK", "int   user_id   FK", "string   enrollment   UK", "bool   is_blocked", "date   created_at"])
+    category = entity(page, 448, 118, 112, "CATEGORY", ["int   id   PK", "string   name   UK", "string   description"])
+    book = entity(page, 442, 255, 118, "BOOK", ["int   id   PK", "int   category_id   FK", "string   title", "string   author", "string   isbn", "int   year"])
+    copy = entity(page, 442, 430, 118, "COPY", ["int   id   PK", "int   book_id   FK", "string   inventory_code   UK", "string   status"])
+    request = entity(page, 36, 330, 145, "LOAN_REQUEST", ["int   id   PK", "int   student_id   FK", "int   book_id   FK", "int   copy_id   FK", "string   status"])
+    loan = entity(page, 268, 322, 150, "LOAN", ["int   id   PK", "int   student_id   FK", "int   copy_id   FK", "date   due_date", "string   status", "int   confirmed_by   FK"])
+    note = entity(page, 36, 530, 150, "NOTIFICATION", ["int   id   PK", "int   user_id   FK", "string   kind", "bool   is_read"])
+    user_y = (user.y0 + user.y1) / 2
+    rule(user.x1, user_y, student.x0, user_y)
+    mark(user.x1 + 8, user_y - 4, "1")
+    mark(student.x0 - 6, user_y - 4, "0 ou 1", "right")
+    cat_x = (category.x0 + category.x1) / 2
+    book_x = (book.x0 + book.x1) / 2
+    rule(cat_x, category.y1, book_x, book.y0)
+    mark(book_x + 8, category.y1 + 16, "1")
+    mark(book_x + 8, book.y0 - 4, "N")
+    copy_x = (copy.x0 + copy.x1) / 2
+    rule(book_x, book.y1, copy_x, copy.y0)
+    mark(copy_x + 8, book.y1 + 16, "1")
+    mark(copy_x + 8, copy.y0 - 4, "N")
     stu_x = (student.x0 + student.x1) / 2
-    rule(req_x, request.y0, req_x, bus_y)
-    rule(req_x, bus_y, stu_x, bus_y)
-    rule(stu_x, bus_y, stu_x, student.y1)
-    tag(stu_x + 6, bus_y - 4, "1  N")
-    rule(stu_x, student.y1, stu_x, loan.y0)
-    tag(stu_x + 6, loan.y0 - 16, "1  N")
-    rule(request.x1, (request.y0 + request.y1) / 2, loan.x0, (loan.y0 + loan.y1) / 2)
-    tag(request.x1 + 2, request.y0 + 18, "0..1")
-    rule(user.x0, (user.y0 + user.y1) / 2, 42, (user.y0 + user.y1) / 2)
-    rule(42, (user.y0 + user.y1) / 2, 42, (note.y0 + note.y1) / 2)
-    rule(42, (note.y0 + note.y1) / 2, note.x0, (note.y0 + note.y1) / 2)
-    tag(46, note.y0 - 8, "1  N")
-    doc.y = 600
+    loan_x = (loan.x0 + loan.x1) / 2
+    rule(stu_x, student.y1, loan_x, loan.y0)
+    mark(stu_x + 8, student.y1 + 16, "1")
+    mark(loan_x + 8, loan.y0 - 4, "N")
+    req_x = (request.x0 + request.x1) / 2
+    branch_x = student.x0 + 18
+    branch_y = (student.y1 + request.y0) / 2
+    rule(branch_x, student.y1, branch_x, branch_y)
+    rule(branch_x, branch_y, req_x, branch_y)
+    rule(req_x, branch_y, req_x, request.y0)
+    mark(branch_x + 6, student.y1 + 16, "1")
+    mark(req_x + 6, request.y0 - 4, "N")
+    link_y = (request.y0 + request.y1) / 2
+    rule(request.x1, link_y, loan.x0, link_y)
+    mark(request.x1 + 6, link_y - 11, "0 ou 1")
+    mark(loan.x0 - 6, link_y - 11, "0 ou 1", "right")
+    rule(user.x0, user_y, 24, user_y)
+    rule(24, user_y, 24, (note.y0 + note.y1) / 2)
+    rule(24, (note.y0 + note.y1) / 2, note.x0, (note.y0 + note.y1) / 2)
+    mark(28, user.y1 + 12, "1")
+    mark(30, note.y0 - 4, "N")
+    doc.y = 618
     doc.paragraph(
         "Diagrama entidade-relacionamento das tabelas de conta, aluno, categoria, obra, exemplar, solicitação, empréstimo e notificação."
     )
@@ -505,34 +523,49 @@ def build():
     def rule(x1, y1, x2, y2):
         page.draw_line(pymupdf.Point(x1, y1), pymupdf.Point(x2, y2), color=PURPLE, width=0.9)
 
-    def tag(x, y, text):
-        page.insert_text((x, y), text, fontname="arial", fontsize=7, color=PURPLE)
+    def mark(x, y, text, align="left"):
+        size = 8
+        width = pymupdf.Font(fontfile=ARIAL).text_length(text, fontsize=size)
+        x0 = x - width if align == "right" else x
+        page.draw_rect(pymupdf.Rect(x0 - 1, y - 9, x0 + width + 2, y + 2), color=(1, 1, 1), fill=(1, 1, 1), width=0)
+        page.insert_text((x0, y), text, fontname="arial", fontsize=size, color=PURPLE)
 
     service = entity(
-        page, 175, 118, 230, "CirculationService",
+        page, 188, 116, 220, "CirculationService",
         ["+ request_loan()", "+ approve_request()", "+ reject_request()", "+ register_loan()", "+ request_return()", "+ confirm_return()"],
     )
-    user = entity(page, 40, 280, 145, "User", ["- email", "- full_name", "- role", "+ set_password()"])
-    student = entity(page, 215, 280, 155, "StudentProfile", ["- enrollment", "- is_blocked", "+ block()", "+ unblock()"])
-    book = entity(page, 410, 270, 135, "Book", ["- title", "- author", "- isbn", "- year"])
-    copy = entity(page, 410, 400, 135, "Copy", ["- inventory_code", "- status", "+ reserve()", "+ release()"])
-    loan = entity(page, 40, 470, 175, "Loan", ["- status", "- due_date", "- confirmed_by", "+ request_return()", "+ confirm()"])
-    request = entity(page, 235, 480, 150, "LoanRequest", ["- status", "- requested_at", "+ approve()", "+ reject()"])
+    user = entity(page, 32, 300, 140, "User", ["- email", "- full_name", "- role", "+ set_password()"])
+    student = entity(page, 268, 300, 152, "StudentProfile", ["- enrollment", "- is_blocked", "+ block()", "+ unblock()"])
+    book = entity(page, 448, 292, 112, "Book", ["- title", "- author", "- isbn", "- year"])
+    copy = entity(page, 448, 448, 112, "Copy", ["- inventory_code", "- status", "+ reserve()", "+ release()"])
+    loan = entity(page, 268, 508, 152, "Loan", ["- status", "- due_date", "- confirmed_by", "+ request_return()", "+ confirm()"])
+    request = entity(page, 32, 520, 150, "LoanRequest", ["- status", "- requested_at", "+ approve()", "+ reject()"])
     svc_x = (service.x0 + service.x1) / 2
-    rule(svc_x, service.y1, svc_x, 250)
-    rule(svc_x, 250, (student.x0 + student.x1) / 2, 250)
-    rule((student.x0 + student.x1) / 2, 250, (student.x0 + student.x1) / 2, student.y0)
-    rule(svc_x, 250, (book.x0 + book.x1) / 2, 250)
-    rule((book.x0 + book.x1) / 2, 250, (book.x0 + book.x1) / 2, book.y0)
-    tag(svc_x + 8, 246, "gerencia")
-    rule(user.x1, (user.y0 + user.y1) / 2, student.x0, (student.y0 + student.y1) / 2)
-    tag(user.x1 + 4, user.y0 + 22, "1   0..1")
-    rule((book.x0 + book.x1) / 2, book.y1, (copy.x0 + copy.x1) / 2, copy.y0)
-    tag(book.x1 - 26, book.y1 + 16, "1  N")
-    rule((student.x0 + student.x1) / 2, student.y1, (loan.x0 + loan.x1) / 2, loan.y0)
-    tag(student.x0 + 8, student.y1 + 18, "1  N")
-    rule(loan.x1, (loan.y0 + loan.y1) / 2, request.x0, (request.y0 + request.y1) / 2)
-    tag(loan.x1 + 4, loan.y0 + 14, "0..1")
+    stu_x = (student.x0 + student.x1) / 2
+    book_x = (book.x0 + book.x1) / 2
+    bus_y = 268
+    rule(svc_x, service.y1, svc_x, bus_y)
+    rule(svc_x, bus_y, stu_x, bus_y)
+    rule(stu_x, bus_y, stu_x, student.y0)
+    rule(svc_x, bus_y, book_x, bus_y)
+    rule(book_x, bus_y, book_x, book.y0)
+    mark(svc_x + 8, bus_y - 5, "gerencia")
+    user_y = (user.y0 + user.y1) / 2
+    rule(user.x1, user_y, student.x0, user_y)
+    mark(user.x1 + 8, user_y - 4, "1")
+    mark(student.x0 - 6, user_y - 4, "0 ou 1", "right")
+    copy_x = (copy.x0 + copy.x1) / 2
+    rule(book_x, book.y1, copy_x, copy.y0)
+    mark(copy_x + 8, book.y1 + 16, "1")
+    mark(copy_x + 8, copy.y0 - 4, "N")
+    loan_x = (loan.x0 + loan.x1) / 2
+    rule(stu_x, student.y1, loan_x, loan.y0)
+    mark(stu_x + 8, student.y1 + 16, "1")
+    mark(loan_x + 8, loan.y0 - 4, "N")
+    link_y = (request.y0 + min(request.y1, loan.y1)) / 2
+    rule(request.x1, link_y, loan.x0, link_y)
+    mark(request.x1 + 6, link_y - 11, "0 ou 1")
+    mark(loan.x0 - 6, link_y - 11, "0 ou 1", "right")
     doc.y = 620
     doc.paragraph("Diagrama de classes das entidades de conta, acervo e circulação, e do serviço que aplica as regras.")
     doc.paragraph("Descrição: O diagrama de classes apresenta:")
@@ -711,7 +744,7 @@ def build():
     doc.y += 6
     doc.paragraph("Aplicação local: http://127.0.0.1:5173")
     doc.paragraph("API local: http://127.0.0.1:8000")
-    doc.paragraph("Repositório: pasta local biblioteca-virtual")
+    doc.paragraph("Repositório: https://github.com/David-IFPR/biblioteca-virtual")
 
     doc.save()
     print(OUT)
