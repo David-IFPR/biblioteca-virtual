@@ -189,17 +189,22 @@ class Doc:
         self.y = top + height
 
     def columns(self, headers, rows, widths, size=10.5):
+        def draw_header():
+            cursor = 54
+            for header, width in zip(headers, widths):
+                self.put(cursor, self.y + size, header, "arialbd", size)
+                cursor += width
+            self.y += size + 8
+
         self.need(22)
-        cursor = 54
-        for header, width in zip(headers, widths):
-            self.put(cursor, self.y + size, header, "arialbd", size)
-            cursor += width
-        self.y += size + 8
+        draw_header()
         for row in rows:
             wrapped = [self.wrap(cell, "arial", size, width - 8) for cell, width in zip(row, widths)]
             line_h = size + 3
             height = max(len(lines) for lines in wrapped) * line_h + 6
-            self.need(height)
+            if self.y + height > BOTTOM:
+                self.new_page()
+                draw_header()
             cursor = 54
             for lines, width in zip(wrapped, widths):
                 line_y = self.y + size
@@ -706,6 +711,11 @@ def build():
         ),
     ]
     for title, path, caption, points, height in shots:
+        caption_lines = len(doc.wrap(caption, "arial", 11, 486))
+        bullet_lines = sum(len(doc.wrap("• " + item, "arial", 11, 486)) for item in points)
+        block = 36 + height + 16 + (caption_lines + 1 + bullet_lines) * 14
+        if doc.y + block > BOTTOM:
+            doc.new_page()
         doc.subhead(title)
         doc.image(path, caption, max_height=height)
         doc.paragraph("Características:")
